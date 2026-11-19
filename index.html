@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>CS Study OS</title>
+
+  <!-- PWA / Home Screen Meta Tags -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Study OS">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="theme-color" content="#09090b">
+
+  <!-- Embedded SVG App Icon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%2309090b'/%3E%3Cpath d='M168 180l-64 76 64 76M344 180l64 76-64 76M284 156l-56 200' stroke='%2338bdf8' stroke-width='38' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='112' fill='%2309090b'/%3E%3Cpath d='M168 180l-64 76 64 76M344 180l64 76-64 76M284 156l-56 200' stroke='%2338bdf8' stroke-width='38' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+
+  <style>
+    :root {
+      --bg: #09090b;
+      --surface: #121215;
+      --surface-2: #1c1c21;
+      --border: #27272a;
+      --text: #fafafa;
+      --muted: #a1a1aa;
+      --accent: #38bdf8;
+      --green: #10b981;
+      --yellow: #f59e0b;
+      --red: #ef4444;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 0 0 90px 0;
+      line-height: 1.45;
+    }
+
+    /* Sticky Header */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(9, 9, 11, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 16px 12px;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+    }
+
+    .brand {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand span {
+      color: var(--accent);
+      font-family: var(--mono);
+    }
+
+    .global-pct {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--accent);
+      background: rgba(56, 189, 248, 0.12);
+      padding: 3px 9px;
+      border-radius: 6px;
+      border: 1px solid rgba(56, 189, 248, 0.25);
+    }
+
+    .bar-track {
+      width: 100%;
+      height: 6px;
+      background: var(--surface-2);
+      border-radius: 99px;
+      overflow: hidden;
+      margin-bottom: 8px;
+    }
+
+    .bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--green));
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+
+    .breakdown-row {
+      display: flex;
+      justify-content: space-between;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    .breakdown-row b {
+      color: var(--text);
+    }
+
+    /* Primary 2-Tab Switcher */
+    .main-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 12px 16px 4px;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .main-tab {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 9px;
+      border-radius: 10px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .main-tab.active {
+      background: var(--surface-2);
+      color: var(--text);
+      border-color: var(--accent);
+    }
+
+    .badge-pill {
+      background: var(--red);
+      color: #fff;
+      font-family: var(--mono);
+      font-size: 0.7rem;
+      padding: 1px 6px;
+      border-radius: 99px;
+    }
+
+    /* Container */
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 10px 16px;
+    }
+
+    /* Filter Bar for Modules */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+      padding-bottom: 10px;
+      scrollbar-width: none;
+    }
+    .filter-bar::-webkit-scrollbar { display: none; }
+
+    .chip {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 5px 11px;
+      border-radius: 99px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      white-space: nowrap;
+      cursor: pointer;
+    }
+
+    .chip.active {
+      background: rgba(56, 189, 248, 0.14);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .chip.exam-toggle.active {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    /* Module Card */
+    .mod-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 14px;
+      border-left: 3px solid var(--accent);
+    }
+
+    .mod-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      gap: 8px;
+    }
+
+    .mod-title-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .mod-title {
+      font-size: 1.02rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .exam-badge {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      cursor: pointer;
+    }
+
+    .exam-badge.urgent {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    .exam-badge.soon {
+      background: rgba(245, 158, 11, 0.15);
+      border-color: var(--yellow);
+      color: var(--yellow);
+    }
+
+    .mod-counter {
+      font-family: var(--mono);
+      font-size: 0.78rem;
+      color: var(--muted);
+      background: var(--bg);
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+    }
+
+    /* Chapter Row */
+    .chap-box {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 8px;
+      overflow: hidden;
+    }
+
+    .chap-top {
+      padding: 10px 11px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .chap-row-1 {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .chap-name {
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .chap-name.mastered {
+      color: var(--muted);
+      text-decoration: line-through;
+    }
+
+    .status-select {
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3px 6px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      outline: none;
+    }
+
+    .chap-row-2 {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .pillar-group {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .pillar-btn {
+      font-family: var(--mono);
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .pillar-btn.done {
+      background: rgba(16, 185, 129, 0.16);
+      border-color: var(--green);
+      color: var(--green);
+    }
+
+    .sub-toggle {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    /* Subtasks Drawer */
+    .sub-drawer {
+      background: var(--surface);
+      border-top: 1px dashed var(--border);
+      padding: 9px 11px;
+      display: none;
+    }
+
+    .sub-drawer.open { display: block; }
+
+    .sub-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 5px 0;
+      font-size: 0.83rem;
+    }
+
+    .sub-check-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .mini-box {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      border: 1.5px solid var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      flex-shrink: 0;
+    }
+
+    .mini-box.checked {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #09090b;
+      font-weight: 900;
+    }
+
+    .sub-label.done {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+
+    .icon-btn {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 0.95rem;
+      padding: 2px 6px;
+    }
+    .icon-btn:hover { color: var(--red); }
+
+    .inline-add {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .inline-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 7px;
+      padding: 6px 9px;
+      font-size: 0.82rem;
+      outline: none;
+    }
+
+    .inline-btn {
+      background: var(--accent);
+      color: #09090b;
+      border: none;
+      border-radius: 7px;
+      padding: 0 11px;
+      font-weight: 700;
+      font-size: 0.82rem;
+      cursor: pointer;
+    }
+
+    .add-chap-btn {
+      width: 100%;
+      background: rgba(56, 189, 248, 0.06);
+      border: 1px dashed rgba(56, 189, 248, 0.35);
+      color: var(--accent);
+      border-radius: 9px;
+      padding: 8px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+
+    /* TAB 2: DEADLINES & TO-DO */
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin: 8px 0 10px;
+    }
+
+    .section-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin: 0;
+    }
+
+    .btn-sm {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      color: var(--accent);
+      padding: 5px 10px;
+      border-radius: 7px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .deadlines-strip {
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 8px;
+      margin-bottom: 14px;
+      scrollbar-width: none;
+    }
+    .deadlines-strip::-webkit-scrollbar { display: none; }
+
+    .deadline-card {
+      min-width: 175px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 11px;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .dl-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .dl-mod {
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 5px;
+      background: var(--surface-2);
+    }
+
+    .dl-days {
+      font-family: var(--mono);
+      font-size: 0.75rem;
+      font-weight: 800;
+    }
+
+    .dl-title {
+      font-size: 0.86rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .dl-date {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    /* Quick Add To-Do Card */
+    .todo-composer {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+
+    .composer-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .composer-controls {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .date-preset {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--muted);
+      padding: 5px 9px;
+      border-radius: 7px;
+      font-size: 0.76rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .date-preset.active {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .date-input, .mod-select {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 5px 8px;
+      border-radius: 7px;
+      font-size: 0.76rem;
+      outline: none;
+    }
+
+    .todo-group-label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      margin: 14px 0 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .todo-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .todo-left {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      flex: 1;
+    }
+
+    .todo-check {
+      width: 19px;
+      height: 19px;
+      border-radius: 5px;
+      border: 1.5px solid var(--muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 2px;
+      cursor: pointer;
+      flex-shrink: 0;
+      font-size: 11px;
+    }
+
+    .todo-check.checked {
+      background: var(--green);
+      border-color: var(--green);
+      color: #09090b;
+      font-weight: 900;
+    }
+
+    .todo-body { flex: 1; }
+
+    .todo-text {
+      font-size: 0.88rem;
+      font-weight: 600;
+      margin-bottom: 3px;
+    }
+
+    .todo-text.done {
+      text-decoration: line-through;
+      color: var(--muted);
+    }
+
+    .todo-meta {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    .todo-actions {
+      display: flex;
+      gap: 2px;
+    }
+
+    /* Footer Backup Bar */
+    .footer-tools {
+      max-width: 680px;
+      margin: 24px auto 0;
+      padding: 0 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Bottom Sheet Modal */
+    .modal-bg {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.78);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .modal-bg.open { display: flex; }
+
+    .modal-card {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      width: 100%;
+      max-width: 680px;
+      border-radius: 18px 18px 0 0;
+      padding: 18px;
+    }
+
+    .modal-title {
+      margin: 0 0 12px;
+      font-size: 1rem;
+    }
+
+    .field {
+      margin-bottom: 11px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .field input, .field select {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 9px 11px;
+      border-radius: 9px;
+      font-size: 0.9rem;
+      outline: none;
+    }
+
+    .modal-btns {
+      display: flex;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .btn-primary {
+      flex: 1;
+      background: var(--accent);
+      color: #09090b;
+      border: none;
+      padding: 10px;
+      border-radius: 9px;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+
+    .btn-ghost {
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 10px 14px;
+      border-radius: 9px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Progress Header -->
+  <header class="header">
+    <div class="header-top">
+      <div class="brand"><span>&lt;/&gt;</span> CS Study OS</div>
+      <div class="global-pct" id="globalPct">0%</div>
+    </div>
+    <div class="bar-track">
+      <div class="bar-fill" id="globalFill"></div>
+    </div>
+    <div class="breakdown-row">
+      <span>Cours: <b id="pctCours">0%</b></span>
+      <span>TD: <b id="pctTd">0%</b></span>
+      <span>TP: <b id="pctTp">0%</b></span>
+    </div>
+  </header>
+
+  <!-- Primary View Switcher -->
+  <div class="main-tabs">
+    <button class="main-tab active" id="tabModules" onclick="switchView('modules')">
+      Modules (Cours/TD/TP)
+    </button>
+    <button class="main-tab" id="tabPlanner" onclick="switchView('planner')">
+      Deadlines & To-Do <span class="badge-pill" id="todoBadge" style="display:none">0</span>
+    </button>
+  </div>
+
+  <!-- VIEW 1: MODULES -->
+  <main class="container" id="viewModules">
+    <div class="filter-bar" id="filterBar"></div>
+    <div id="modulesList"></div>
+  </main>
+
+  <!-- VIEW 2: DEADLINES & TO-DO -->
+  <main class="container" id="viewPlanner" style="display:none">
+    <div class="section-head">
+      <h2 class="section-title">Deadlines & Examens</h2>
+      <button class="btn-sm" onclick="openDeadlineModal()">+ Deadline</button>
+    </div>
+    <div class="deadlines-strip" id="deadlinesStrip"></div>
+
+    <div class="section-head">
+      <h2 class="section-title">To-Do List par Date</h2>
+    </div>
+
+    <div class="todo-composer">
+      <div class="composer-row">
+        <input type="text" id="todoInput" class="inline-input" placeholder="Ex: Finir Série TD 2, Coder TP..." onkeypress="if(event.key==='Enter') addTodo()">
+        <button class="inline-btn" onclick="addTodo()">Ajouter</button>
+      </div>
+      <div class="composer-controls">
+        <button class="date-preset active" id="presetToday" onclick="setPresetDate('today')">Aujourd'hui</button>
+        <button class="date-preset" id="presetTomorrow" onclick="setPresetDate('tomorrow')">Demain</button>
+        <input type="date" id="todoDateInput" class="date-input" onchange="clearPresets()">
+        <select id="todoModSelect" class="mod-select"></select>
+      </div>
+    </div>
+
+    <div id="todoGroups"></div>
+  </main>
+
+  <!-- Footer JSON Backup -->
+  <div class="footer-tools">
+    <button class="btn-sm" onclick="exportData()">Exporter JSON</button>
+    <button class="btn-sm" onclick="document.getElementById('importFile').click()">Importer JSON</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+  </div>
+
+  <!-- Modal: Add Chapter -->
+  <div class="modal-bg" id="chapModal" onclick="if(event.target.id==='chapModal') closeModals()">
+    <div class="modal-card">
+      <h3 class="modal-title" id="chapModalTitle">Nouveau Chapitre</h3>
+      <div class="field">
+        <label>Titre du chapitre</label>
+        <input type="text" id="chapNameInput" placeholder="Ex: Analyse Lexical, Graphes, Routage...">
+      </div>
+      <div class="field">
+        <label>Sous-tâches optionnelles (séparées par des virgules)</label>
+        <input type="text" id="chapSubsInput" placeholder="Ex: Résumé, Exo 1 à 4, Mini-projet">
+      </div>
+      <div class="modal-btns">
+        <button class="btn-primary" onclick="saveChapter()">Ajouter</button>
+        <button class="btn-ghost" onclick="closeModals()">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Set Exam Date on Module -->
+  <div class="modal-bg" id="examModal" onclick="if(event.target.id==='examModal') closeModals()">
+    <div class="modal-card">
+      <h3 class="modal-title" id="examModalTitle">Date d'examen / Interro</h3>
+      <div class="field">
+        <label>Date prévue</label>
+        <input type="date" id="examDateInput">
+      </div>
+      <div class="modal-btns">
+        <button class="btn-primary" onclick="saveExamDate()">Enregistrer</button>
+        <button class="btn-ghost" onclick="clearExamDate()">Effacer</button>
+        <button class="btn-ghost" onclick="closeModals()">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Add Deadline -->
+  <div class="modal-bg" id="dlModal" onclick="if(event.target.id==='dlModal') closeModals()">
+    <div class="modal-card">
+      <h3 class="modal-title">Nouvelle Deadline</h3>
+      <div class="field">
+        <label>Titre (TP, Interro, Projet...)</label>
+        <input type="text" id="dlTitleInput" placeholder="Ex: Rendu TP Dev Web">
+      </div>
+      <div class="field">
+        <label>Module</label>
+        <select id="dlModInput"></select>
+      </div>
+      <div class="field">
+        <label>Date limite</label>
+        <input type="date" id="dlDateInput">
+      </div>
+      <div class="modal-btns">
+        <button class="btn-primary" onclick="saveDeadline()">Ajouter</button>
+        <button class="btn-ghost" onclick="closeModals()">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Edit To-Do -->
+  <div class="modal-bg" id="editTodoModal" onclick="if(event.target.id==='editTodoModal') closeModals()">
+    <div class="modal-card">
+      <h3 class="modal-title">Modifier la tâche</h3>
+      <div class="field">
+        <label>Tâche</label>
+        <input type="text" id="editTodoText">
+      </div>
+      <div class="field">
+        <label>Date</label>
+        <input type="date" id="editTodoDate">
+      </div>
+      <div class="field">
+        <label>Module</label>
+        <select id="editTodoMod"></select>
+      </div>
+      <div class="modal-btns">
+        <button class="btn-primary" onclick="saveEditedTodo()">Sauvegarder</button>
+        <button class="btn-ghost" onclick="closeModals()">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function todayStr(offsetDays = 0) {
+      const d = new Date();
+      d.setDate(d.getDate() + offsetDays);
+      return d.toISOString().split('T')[0];
+    }
+
+    const initialData = {
+      modules: [
+        {
+          id: "compil",
+          name: "Compilation",
+          color: "#38bdf8",
+          pillars: ["Cours", "TD", "TP"],
+          examDate: "",
+          chapters: [
+            {
+              title: "Chapitre 1 : Introduction & Analyse Lexicale",
+              status: "En cours",
+              open: false,
+              donePillars: { Cours: true, TD: false, TP: false },
+              subs: [
+                { text: "Automates finis déterministes (AFD)", done: true },
+                { text: "TP1 : Implémentation Lexer", done: false }
+              ]
+            }
+          ]
+        },
+        {
+          id: "se2",
+          name: "SE2",
+          color: "#818cf8",
+          pillars: ["Cours", "TD"],
+          examDate: "",
+          chapters: [
+            {
+              title: "Chapitre 1 : Synchronisation & Sémaphores",
+              status: "En cours",
+              open: false,
+              donePillars: { Cours: true, TD: false },
+              subs: [{ text: "Problème Producteur / Consommateur", done: false }]
+            }
+          ]
+        },
+        {
+          id: "reseaux",
+          name: "Réseaux",
+          color: "#10b981",
+          pillars: ["Cours", "TP"],
+          examDate: "",
+          chapters: [
+            {
+              title: "Chapitre 1 : Couche Réseau & Adressage IP",
+              status: "En cours",
+              open: false,
+              donePillars: { Cours: false, TP: false },
+              subs: [{ text: "Sous-réseaux & CIDR", done: false }]
+            }
+          ]
+        },
+        {
+          id: "ro",
+          name: "Recherche Opérationnelle",
+          color: "#f59e0b",
+          pillars: ["Cours", "TD"],
+          examDate: "",
+          chapters: [
+            {
+              title: "Chapitre 1 : Programmation Linéaire & Simplexe",
+              status: "En cours",
+              open: false,
+              donePillars: { Cours: true, TD: false },
+              subs: [{ text: "Série TD 1", done: false }]
+            }
+          ]
+        },
+        {
+          id: "si",
+          name: "Systèmes d'Information",
+          color: "#a78bfa",
+          pillars: ["Cours"],
+          examDate: "",
+          chapters: [
+            {
+              title: "Chapitre 1 : Modélisation & Conception SI",
+              status: "En cours",
+              open: false,
+              donePillars: { Cours: false },
+              subs: []
+            }
+          ]
+        },
+        {
+          id: "ia",
+          name: "IA",
+          color: "#f472b6",
+          pillars: ["Cours"],
+          examDate: "",
+          chapters: [
+            {
+              title: "Chapitre 1 : Recherche Heuristique (A*)",
+              status: "En cours",
+              open: false,
+              donePillars: { Cours: false },
+              subs: []
+            }
+          ]
+        },
+        {
+          id: "devweb",
+          name: "Dev Web",
+          color: "#fb7185",
+          pillars: ["Cours", "TP"],
+          examDate: "",
+          chapters: [
+            {
+              title: "Chapitre 1 : Architecture Web & Backend",
+              status: "En cours",
+              open: false,
+              donePillars: { Cours: true, TP: false },
+              subs: [{ text: "TP1 : API & DOM", done: false }]
+            }
+          ]
+        },
+        {
+          id: "anglais",
+          name: "Anglais",
+          color: "#34d399",
+          pillars: ["Cours"],
+          examDate: "",
+          chapters: [
+            {
+              title: "Unit 1 : Technical English & Vocabulary",
+              status: "En cours",
+              open: false,
+              donePillars: { Cours: false },
+              subs: []
+            }
+          ]
+        }
+      ],
+      deadlines: [
+        { id: 1, title: "Révision TD Compilation", modId: "compil", date: todayStr(5) }
+      ],
+      todos: [
+        { id: 101, text: "Terminer Série TD 1 SE2", date: todayStr(0), modId: "se2", done: false },
+        { id: 102, text: "Préparer TP Réseaux", date: todayStr(1), modId: "reseaux", done: false }
+      ]
+    };
+
+    let db = JSON.parse(localStorage.getItem('csStudyOS_v1')) || initialData;
+    let currentView = 'modules';
+    let filterMod = 'all';
+    let examMode = false;
+    let activeModIdx = null;
+    let editingTodoId = null;
+
+    function persist() {
+      localStorage.setItem('csStudyOS_v1', JSON.stringify(db));
+    }
+
+    function daysDiff(dateStr) {
+      if (!dateStr) return null;
+      const target = new Date(dateStr + 'T00:00:00');
+      const now = new Date(todayStr() + 'T00:00:00');
+      return Math.round((target - now) / (1000 * 60 * 60 * 24));
+    }
+
+    function formatDaysLabel(diff) {
+      if (diff === null) return '+ Date Exam';
+      if (diff < 0) return `Passé (${Math.abs(diff)}j)`;
+      if (diff === 0) return "Aujourd'hui!";
+      return `J-${diff}`;
+    }
+
+    function switchView(view) {
+      currentView = view;
+      document.getElementById('tabModules').classList.toggle('active', view === 'modules');
+      document.getElementById('tabPlanner').classList.toggle('active', view === 'planner');
+      document.getElementById('viewModules').style.display = view === 'modules' ? 'block' : 'none';
+      document.getElementById('viewPlanner').style.display = view === 'planner' ? 'block' : 'none';
+      renderAll();
+    }
+
+    function renderAll() {
+      updateStats();
+      renderFilters();
+      renderModules();
+      renderPlanner();
+    }
+
+    function updateStats() {
+      let cTot = 0, cDone = 0;
+      let tdTot = 0, tdDone = 0;
+      let tpTot = 0, tpDone = 0;
+
+      db.modules.forEach(m => {
+        m.chapters.forEach(ch => {
+          m.pillars.forEach(p => {
+            if (p === 'Cours') { cTot++; if (ch.donePillars.Cours) cDone++; }
+            if (p === 'TD') { tdTot++; if (ch.donePillars.TD) tdDone++; }
+            if (p === 'TP') { tpTot++; if (ch.donePillars.TP) tpDone++; }
+          });
+        });
+      });
+
+      const allTot = cTot + tdTot + tpTot;
+      const allDone = cDone + tdDone + tpDone;
+      const pct = allTot ? Math.round((allDone / allTot) * 100) : 0;
+
+      document.getElementById('globalPct').innerText = `${pct}%`;
+      document.getElementById('globalFill').style.width = `${pct}%`;
+      document.getElementById('pctCours').innerText = cTot ? `${Math.round((cDone / cTot) * 100)}%` : '0%';
+      document.getElementById('pctTd').innerText = tdTot ? `${Math.round((tdDone / tdTot) * 100)}%` : '0%';
+      document.getElementById('pctTp').innerText = tpTot ? `${Math.round((tpDone / tpTot) * 100)}%` : '0%';
+
+      const pendingTodos = db.todos.filter(t => !t.done).length;
+      const badge = document.getElementById('todoBadge');
+      badge.style.display = pendingTodos > 0 ? 'inline-block' : 'none';
+      badge.innerText = pendingTodos;
+    }
+
+    function renderFilters() {
+      const bar = document.getElementById('filterBar');
+      let html = `
+        <button class="chip exam-toggle ${examMode ? 'active' : ''}" onclick="toggleExamMode()">
+          🔥 Mode Exam
+        </button>
+        <button class="chip ${filterMod === 'all' ? 'active' : ''}" onclick="setFilterMod('all')">Tous</button>
+      `;
+      db.modules.forEach(m => {
+        html += `<button class="chip ${filterMod === m.id ? 'active' : ''}" onclick="setFilterMod('${m.id}')">${m.name}</button>`;
+      });
+      bar.innerHTML = html;
+    }
+
+    function toggleExamMode() {
+      examMode = !examMode;
+      renderAll();
+    }
+
+    function setFilterMod(id) {
+      filterMod = id;
+      renderAll();
+    }
+
+    function renderModules() {
+      const list = document.getElementById('modulesList');
+      list.innerHTML = '';
+
+      db.modules.forEach((mod, mIdx) => {
+        if (filterMod !== 'all' && filterMod !== mod.id) return;
+
+        const visibleChaps = mod.chapters
+          .map((ch, cIdx) => ({ ch, cIdx }))
+          .filter(item => !examMode || item.ch.status !== 'Maîtrisé');
+
+        if (examMode && visibleChaps.length === 0) return;
+
+        const diff = daysDiff(mod.examDate);
+        let badgeClass = 'exam-badge';
+        if (diff !== null && diff <= 4) badgeClass += ' urgent';
+        else if (diff !== null && diff <= 12) badgeClass += ' soon';
+
+        let totalSteps = 0, doneSteps = 0;
+        mod.chapters.forEach(ch => {
+          mod.pillars.forEach(p => {
+            totalSteps++;
+            if (ch.donePillars[p]) doneSteps++;
+          });
+        });
+
+        let chapsHTML = visibleChaps.map(({ ch, cIdx }) => {
+          const pillarsHTML = mod.pillars.map(p => `
+            <button class="pillar-btn ${ch.donePillars[p] ? 'done' : ''}" onclick="togglePillar(${mIdx}, ${cIdx}, '${p}')">
+              ${ch.donePillars[p] ? '✓ ' : ''}${p}
+            </button>
+          `).join('');
+
+          const subDone = ch.subs.filter(s => s.done).length;
+          const subsHTML = ch.subs.map((s, sIdx) => `
+            <div class="sub-line">
+              <div class="sub-check-wrap" onclick="toggleSub(${mIdx}, ${cIdx}, ${sIdx})">
+                <div class="mini-box ${s.done ? 'checked' : ''}">${s.done ? '✓' : ''}</div>
+                <span class="sub-label ${s.done ? 'done' : ''}">${s.text}</span>
+              </div>
+              <button class="icon-btn" onclick="deleteSub(${mIdx}, ${cIdx}, ${sIdx})">×</button>
+            </div>
+          `).join('');
+
+          return `
+            <div class="chap-box">
+              <div class="chap-top">
+                <div class="chap-row-1">
+                  <span class="chap-name ${ch.status === 'Maîtrisé' ? 'mastered' : ''}" onclick="toggleDrawer(${mIdx}, ${cIdx})">
+                    ${ch.title}
+                  </span>
+                  <select class="status-select" onchange="changeStatus(${mIdx}, ${cIdx}, this.value)">
+                    <option value="Bloqué" ${ch.status === 'Bloqué' ? 'selected' : ''}>🔴 Bloqué</option>
+                    <option value="En cours" ${ch.status === 'En cours' ? 'selected' : ''}>🟡 En cours</option>
+                    <option value="Maîtrisé" ${ch.status === 'Maîtrisé' ? 'selected' : ''}>🟢 Maîtrisé</option>
+                  </select>
+                </div>
+                <div class="chap-row-2">
+                  <div class="pillar-group">${pillarsHTML}</div>
+                  <button class="sub-toggle" onclick="toggleDrawer(${mIdx}, ${cIdx})">
+                    Tâches ${subDone}/${ch.subs.length} ${ch.open ? '▲' : '▼'}
+                  </button>
+                </div>
+              </div>
+              <div class="sub-drawer ${ch.open ? 'open' : ''}">
+                ${subsHTML}
+                <div class="inline-add">
+                  <input type="text" class="inline-input" id="subIn-${mIdx}-${cIdx}" placeholder="Ajouter sous-élément..." onkeypress="if(event.key==='Enter') addSub(${mIdx}, ${cIdx})">
+                  <button class="inline-btn" onclick="addSub(${mIdx}, ${cIdx})">+</button>
+                </div>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        const card = document.createElement('section');
+        card.className = 'mod-card';
+        card.style.borderLeftColor = mod.color;
+        card.innerHTML = `
+          <div class="mod-header">
+            <div class="mod-title-wrap">
+              <h2 class="mod-title" style="color:${mod.color}">${mod.name}</h2>
+              <button class="${badgeClass}" onclick="openExamModal(${mIdx})">${formatDaysLabel(diff)}</button>
+            </div>
+            <span class="mod-counter">${String(doneSteps).padStart(2,'0')}/${String(totalSteps).padStart(2,'0')}</span>
+          </div>
+          ${chapsHTML}
+          <button class="add-chap-btn" onclick="openChapModal(${mIdx})">+ Ajouter un chapitre</button>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    function togglePillar(mIdx, cIdx, pillar) {
+      const ch = db.modules[mIdx].chapters[cIdx];
+      ch.donePillars[pillar] = !ch.donePillars[pillar];
+      const allDone = db.modules[mIdx].pillars.every(p => ch.donePillars[p]);
+      if (allDone) ch.status = 'Maîtrisé';
+      else if (ch.status === 'Maîtrisé') ch.status = 'En cours';
+      persist();
+      renderAll();
+    }
+
+    function changeStatus(mIdx, cIdx, val) {
+      const mod = db.modules[mIdx];
+      const ch = mod.chapters[cIdx];
+      ch.status = val;
+      if (val === 'Maîtrisé') {
+        mod.pillars.forEach(p => ch.donePillars[p] = true);
+      }
+      persist();
+      renderAll();
+    }
+
+    function toggleDrawer(mIdx, cIdx) {
+      db.modules[mIdx].chapters[cIdx].open = !db.modules[mIdx].chapters[cIdx].open;
+      persist();
+      renderAll();
+    }
+
+    function toggleSub(mIdx, cIdx, sIdx) {
+      const sub = db.modules[mIdx].chapters[cIdx].subs[sIdx];
+      sub.done = !sub.done;
+      persist();
+      renderAll();
+    }
+
+    function addSub(mIdx, cIdx) {
+      const inp = document.getElementById(`subIn-${mIdx}-${cIdx}`);
+      const val = inp.value.trim();
+      if (!val) return;
+      db.modules[mIdx].chapters[cIdx].subs.push({ text: val, done: false });
+      persist();
+      renderAll();
+    }
+
+    function deleteSub(mIdx, cIdx, sIdx) {
+      db.modules[mIdx].chapters[cIdx].subs.splice(sIdx, 1);
+      persist();
+      renderAll();
+    }
+
+    /* Modals for Modules */
+    function openChapModal(mIdx) {
+      activeModIdx = mIdx;
+      document.getElementById('chapModalTitle').innerText = `Nouveau Chapitre — ${db.modules[mIdx].name}`;
+      document.getElementById('chapNameInput').value = '';
+      document.getElementById('chapSubsInput').value = '';
+      document.getElementById('chapModal').classList.add('open');
+      setTimeout(() => document.getElementById('chapNameInput').focus(), 80);
+    }
+
+    function saveChapter() {
+      const title = document.getElementById('chapNameInput').value.trim();
+      if (!title || activeModIdx === null) return;
+      const mod = db.modules[activeModIdx];
+      const donePillars = {};
+      mod.pillars.forEach(p => donePillars[p] = false);
+
+      const subs = document.getElementById('chapSubsInput').value
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean)
+        .map(text => ({ text, done: false }));
+
+      mod.chapters.push({
+        title,
+        status: 'En cours',
+        open: subs.length > 0,
+        donePillars,
+        subs
+      });
+      persist();
+      closeModals();
+      renderAll();
+    }
+
+    function openExamModal(mIdx) {
+      activeModIdx = mIdx;
+      document.getElementById('examModalTitle').innerText = `Date Exam — ${db.modules[mIdx].name}`;
+      document.getElementById('examDateInput').value = db.modules[mIdx].examDate || todayStr(7);
+      document.getElementById('examModal').classList.add('open');
+    }
+
+    function saveExamDate() {
+      if (activeModIdx === null) return;
+      db.modules[activeModIdx].examDate = document.getElementById('examDateInput').value;
+      persist();
+      closeModals();
+      renderAll();
+    }
+
+    function clearExamDate() {
+      if (activeModIdx === null) return;
+      db.modules[activeModIdx].examDate = '';
+      persist();
+      closeModals();
+      renderAll();
+    }
+
+    /* PLANNER: DEADLINES & DATE-LINKED TO-DO */
+    function populateModSelects() {
+      const opts = `<option value="">Général</option>` +
+        db.modules.map(m => `<option value="${m.id}">${m.name}</option>`).join('');
+      document.getElementById('todoModSelect').innerHTML = opts;
+      document.getElementById('dlModInput').innerHTML = opts;
+      document.getElementById('editTodoMod').innerHTML = opts;
+    }
+
+    function setPresetDate(type) {
+      document.getElementById('presetToday').classList.toggle('active', type === 'today');
+      document.getElementById('presetTomorrow').classList.toggle('active', type === 'tomorrow');
+      document.getElementById('todoDateInput').value = type === 'today' ? todayStr(0) : todayStr(1);
+    }
+
+    function clearPresets() {
+      document.getElementById('presetToday').classList.remove('active');
+      document.getElementById('presetTomorrow').classList.remove('active');
+    }
+
+    function renderPlanner() {
+      populateModSelects();
+      if (!document.getElementById('todoDateInput').value) {
+        document.getElementById('todoDateInput').value = todayStr(0);
+      }
+
+      // Render Deadlines Strip
+      const strip = document.getElementById('deadlinesStrip');
+      const sortedDls = [...db.deadlines].sort((a, b) => a.date.localeCompare(b.date));
+      if (sortedDls.length === 0) {
+        strip.innerHTML = `<div style="font-size:0.8rem;color:var(--muted);padding:6px 0;">Aucune deadline ajoutée.</div>`;
+      } else {
+        strip.innerHTML = sortedDls.map(dl => {
+          const mod = db.modules.find(m => m.id === dl.modId);
+          const diff = daysDiff(dl.date);
+          let color = 'var(--accent)';
+          if (diff !== null && diff <= 3) color = 'var(--red)';
+          else if (diff !== null && diff <= 7) color = 'var(--yellow)';
+
+          return `
+            <div class="deadline-card" style="border-top: 3px solid ${mod ? mod.color : 'var(--accent)'}">
+              <div class="dl-top">
+                <span class="dl-mod" style="color:${mod ? mod.color : 'var(--text)'}">${mod ? mod.name : 'Général'}</span>
+                <span class="dl-days" style="color:${color}">${formatDaysLabel(diff)}</span>
+              </div>
+              <div class="dl-title">${dl.title}</div>
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <span class="dl-date">${dl.date}</span>
+                <button class="icon-btn" onclick="deleteDeadline(${dl.id})" title="Supprimer">×</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+      }
+
+      // Render Grouped To-Dos
+      const groupsEl = document.getElementById('todoGroups');
+      const today = todayStr(0);
+      const overdue = [], todayList = [], upcoming = [], doneList = [];
+
+      const sortedTodos = [...db.todos].sort((a, b) => a.date.localeCompare(b.date));
+      sortedTodos.forEach(t => {
+        if (t.done) doneList.push(t);
+        else if (t.date < today) overdue.push(t);
+        else if (t.date === today) todayList.push(t);
+        else upcoming.push(t);
+      });
+
+      const renderGroup = (label, color, items) => {
+        if (items.length === 0) return '';
+        const itemsHTML = items.map(t => {
+          const mod = db.modules.find(m => m.id === t.modId);
+          return `
+            <div class="todo-item">
+              <div class="todo-left">
+                <div class="todo-check ${t.done ? 'checked' : ''}" onclick="toggleTodo(${t.id})">${t.done ? '✓' : ''}</div>
+                <div class="todo-body">
+                  <div class="todo-text ${t.done ? 'done' : ''}">${t.text}</div>
+                  <div class="todo-meta">
+                    <span>📅 ${t.date}</span>
+                    ${mod ? `<span style="color:${mod.color}">• ${mod.name}</span>` : ''}
+                  </div>
+                </div>
+              </div>
+              <div class="todo-actions">
+                <button class="icon-btn" onclick="openEditTodo(${t.id})" title="Modifier">✎</button>
+                <button class="icon-btn" onclick="deleteTodo(${t.id})" title="Supprimer">×</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        return `<div class="todo-group-label" style="color:${color}">${label} (${items.length})</div>${itemsHTML}`;
+      };
+
+      groupsEl.innerHTML =
+        renderGroup('⚠️ En retard', 'var(--red)', overdue) +
+        renderGroup("📌 Aujourd'hui", 'var(--accent)', todayList) +
+        renderGroup('🗓️ À venir', 'var(--yellow)', upcoming) +
+        renderGroup('✅ Terminé', 'var(--green)', doneList);
+    }
+
+    function addTodo() {
+      const inp = document.getElementById('todoInput');
+      const text = inp.value.trim();
+      if (!text) return;
+      const date = document.getElementById('todoDateInput').value || todayStr(0);
+      const modId = document.getElementById('todoModSelect').value;
+
+      db.todos.push({
+        id: Date.now(),
+        text,
+        date,
+        modId,
+        done: false
+      });
+      inp.value = '';
+      persist();
+      renderAll();
+    }
+
+    function toggleTodo(id) {
+      const t = db.todos.find(item => item.id === id);
+      if (t) t.done = !t.done;
+      persist();
+      renderAll();
+    }
+
+    function deleteTodo(id) {
+      db.todos = db.todos.filter(item => item.id !== id);
+      persist();
+      renderAll();
+    }
+
+    function openEditTodo(id) {
+      const t = db.todos.find(item => item.id === id);
+      if (!t) return;
+      editingTodoId = id;
+      document.getElementById('editTodoText').value = t.text;
+      document.getElementById('editTodoDate').value = t.date;
+      document.getElementById('editTodoMod').value = t.modId || '';
+      document.getElementById('editTodoModal').classList.add('open');
+    }
+
+    function saveEditedTodo() {
+      const t = db.todos.find(item => item.id === editingTodoId);
+      if (!t) return;
+      const newText = document.getElementById('editTodoText').value.trim();
+      if (newText) t.text = newText;
+      t.date = document.getElementById('editTodoDate').value || t.date;
+      t.modId = document.getElementById('editTodoMod').value;
+      persist();
+      closeModals();
+      renderAll();
+    }
+
+    function openDeadlineModal() {
+      document.getElementById('dlTitleInput').value = '';
+      document.getElementById('dlDateInput').value = todayStr(7);
+      document.getElementById('dlModal').classList.add('open');
+      setTimeout(() => document.getElementById('dlTitleInput').focus(), 80);
+    }
+
+    function saveDeadline() {
+      const title = document.getElementById('dlTitleInput').value.trim();
+      const date = document.getElementById('dlDateInput').value;
+      const modId = document.getElementById('dlModInput').value;
+      if (!title || !date) return;
+
+      db.deadlines.push({ id: Date.now(), title, modId, date });
+      persist();
+      closeModals();
+      renderAll();
+    }
+
+    function deleteDeadline(id) {
+      db.deadlines = db.deadlines.filter(d => d.id !== id);
+      persist();
+      renderAll();
+    }
+
+    function closeModals() {
+      document.querySelectorAll('.modal-bg').forEach(m => m.classList.remove('open'));
+    }
+
+    /* Export / Import Backup */
+    function exportData() {
+      const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `cs-study-backup-${todayStr(0)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importData(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const parsed = JSON.parse(evt.target.result);
+          if (parsed.modules && parsed.todos) {
+            db = parsed;
+            persist();
+            renderAll();
+            alert('Sauvegarde importée avec succès !');
+          }
+        } catch (err) {
+          alert('Fichier JSON invalide.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    renderAll();
+  </script>
+</body>
+</html>
