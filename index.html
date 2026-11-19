@@ -284,7 +284,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
     }
 
     .chap-name {
@@ -297,6 +297,13 @@
     .chap-name.mastered {
       color: var(--muted);
       text-decoration: line-through;
+    }
+
+    .chap-controls {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      flex-shrink: 0;
     }
 
     .status-select {
@@ -408,8 +415,9 @@
       border: none;
       color: var(--muted);
       cursor: pointer;
-      font-size: 0.95rem;
+      font-size: 1rem;
       padding: 2px 6px;
+      line-height: 1;
     }
     .icon-btn:hover { color: var(--red); }
 
@@ -1195,11 +1203,14 @@
                   <span class="chap-name ${ch.status === 'Maîtrisé' ? 'mastered' : ''}" onclick="toggleDrawer(${mIdx}, ${cIdx})">
                     ${ch.title}
                   </span>
-                  <select class="status-select" onchange="changeStatus(${mIdx}, ${cIdx}, this.value)">
-                    <option value="Bloqué" ${ch.status === 'Bloqué' ? 'selected' : ''}>🔴 Bloqué</option>
-                    <option value="En cours" ${ch.status === 'En cours' ? 'selected' : ''}>🟡 En cours</option>
-                    <option value="Maîtrisé" ${ch.status === 'Maîtrisé' ? 'selected' : ''}>🟢 Maîtrisé</option>
-                  </select>
+                  <div class="chap-controls">
+                    <select class="status-select" onchange="changeStatus(${mIdx}, ${cIdx}, this.value)">
+                      <option value="Bloqué" ${ch.status === 'Bloqué' ? 'selected' : ''}>🔴 Bloqué</option>
+                      <option value="En cours" ${ch.status === 'En cours' ? 'selected' : ''}>🟡 En cours</option>
+                      <option value="Maîtrisé" ${ch.status === 'Maîtrisé' ? 'selected' : ''}>🟢 Maîtrisé</option>
+                    </select>
+                    <button class="icon-btn" onclick="deleteChapter(${mIdx}, ${cIdx})" title="Supprimer le chapitre">×</button>
+                  </div>
                 </div>
                 <div class="chap-row-2">
                   <div class="pillar-group">${pillarsHTML}</div>
@@ -1256,6 +1267,15 @@
       }
       persist();
       renderAll();
+    }
+
+    function deleteChapter(mIdx, cIdx) {
+      const chapTitle = db.modules[mIdx].chapters[cIdx].title;
+      if (confirm(`Supprimer "${chapTitle}" ?`)) {
+        db.modules[mIdx].chapters.splice(cIdx, 1);
+        persist();
+        renderAll();
+      }
     }
 
     function toggleDrawer(mIdx, cIdx) {
